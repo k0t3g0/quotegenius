@@ -48,9 +48,8 @@ def simple_lemmatize(text):
 
 # === Создание базы ===
 with app.app_context():
-    db.drop_all()
     db.create_all()
-    print("✅ База создана с JWT!")
+    print("✅ База готова!")
 
 # === Регистрация ===
 @app.route('/register', methods=['POST'])
@@ -82,14 +81,17 @@ def login():
     if not user or not bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
         return {"error": "Неверный логин или пароль"}, 401
 
-    access_token = create_access_token(identity=user.id)
+    access_token = create_access_token(
+    identity=str(user.id),
+    additional_claims={"username": user.username}
+)
     return {"access_token": access_token}, 200
 
 # === Создание цитаты (только для авторизованных) ===
 @app.route('/quotes', methods=['POST'])
 @jwt_required()
 def create_quote():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     data = request.json
 
     if not data or not data.get('text'):
@@ -140,7 +142,7 @@ def like_quote(quote_id):
 @app.route('/quotes/<int:quote_id>', methods=['DELETE'])
 @jwt_required()
 def delete_quote(quote_id):
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     quote = Quote.query.get(quote_id)
 
     if not quote:

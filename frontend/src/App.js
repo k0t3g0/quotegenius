@@ -23,7 +23,7 @@ function App() {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        setUser({ username: payload.sub || 'User' });
+        setUser({ username: payload.username || 'User' });
       } catch {
         setUser({ username: 'User' });
       }
