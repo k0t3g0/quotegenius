@@ -6,6 +6,7 @@ from flask_bcrypt import Bcrypt
 from dotenv import load_dotenv
 import os
 import re
+import pymorphy3
 
 load_dotenv()
 
@@ -20,6 +21,7 @@ app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
 jwt = JWTManager(app)
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
+morph = pymorphy3.MorphAnalyzer()
 
 # === Модели ===
 class User(db.Model):
@@ -43,12 +45,10 @@ def simple_lemmatize(text):
     tokens = re.findall(r'\b[а-яё]+\b', text)
     result = []
     for token in tokens:
-        if token not in STOP_WORDS and len(token) > 2:
-            if len(token) > 5:
-                token = token[:5]
-            elif len(token) > 4:
-                token = token[:4]
-            result.append(token)
+        if token in STOP_WORDS or len(token) <= 2:
+            continue
+        lemma = morph.parse(token)[0].normal_form
+        result.append(lemma)
     return ' '.join(result)
 
 # === Создание базы ===
