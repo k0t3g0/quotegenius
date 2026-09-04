@@ -2,8 +2,12 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
-import bcrypt
+from flask_bcrypt import Bcrypt
+from dotenv import load_dotenv
+import os
 import re
+
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
@@ -11,10 +15,11 @@ CORS(app)
 # === Настройки ===
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///quotes.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_SECRET_KEY'] = 'supersecretkey12345678901234567890'  # 32+ символов
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
 
 jwt = JWTManager(app)
 db = SQLAlchemy(app)
+bcrypt = Bcrypt(app)
 
 # === Модели ===
 class User(db.Model):
@@ -64,12 +69,11 @@ def register():
     if User.query.filter_by(username=username).first():
         return {"error": "Пользователь уже существует"}, 400
 
-    hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-    user = User(username=username, password=hashed.decode('utf-8'))
+    hashed = bcrypt.generate_password_hash(password).decode('utf-8')
+    user = User(username=username, password=hashed)
     db.session.add(user)
     db.session.commit()
     return {"message": "Пользователь создан"}, 201
-
 # === Логин ===
 @app.route('/login', methods=['POST'])
 def login():
@@ -78,7 +82,7 @@ def login():
     password = data.get('password')
 
     user = User.query.filter_by(username=username).first()
-    if not user or not bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
+    if not user or not bcrypt.check_password_hash(user.password, password):
         return {"error": "Неверный логин или пароль"}, 401
 
     access_token = create_access_token(
