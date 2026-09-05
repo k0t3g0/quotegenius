@@ -33,6 +33,9 @@ class Quote(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.String(500), nullable=False)
     author = db.Column(db.String(100), default='Неизвестен')
+    theme = db.Column(db.String(50), default='')
+    mood = db.Column(db.String(50), default='')
+    style = db.Column(db.String(50), default='')
     lemmas = db.Column(db.String(500), default='')
     likes = db.Column(db.Integer, default=0)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
@@ -106,6 +109,9 @@ def create_quote():
     quote = Quote(
         text=data['text'],
         author=data.get('author', 'Неизвестен'),
+        theme=data.get('theme', ''),
+        mood=data.get('mood', ''),
+        style=data.get('style', ''),
         lemmas=lemmas,
         user_id=user_id
     )
@@ -117,20 +123,34 @@ def create_quote():
 @app.route('/quotes', methods=['GET'])
 def get_quotes():
     search = request.args.get('search', '')
+    theme = request.args.get('theme', '')
+    mood = request.args.get('mood', '')
+    style = request.args.get('style', '')
+
+    query = Quote.query
+
     if search:
         search_lemmas = simple_lemmatize(search)
-        quotes = Quote.query.filter(Quote.lemmas.contains(search_lemmas)).all()
-    else:
-        quotes = Quote.query.all()
+        query = query.filter(Quote.lemmas.contains(search_lemmas))
+    if theme:
+        query = query.filter_by(theme=theme)
+    if mood:
+        query = query.filter_by(mood=mood)
+    if style:
+        query = query.filter_by(style=style)
+
+    quotes = query.all()
 
     return jsonify([{
         "id": q.id,
         "text": q.text,
         "author": q.author,
+        "theme": q.theme,
+        "mood": q.mood,
+        "style": q.style,
         "lemmas": q.lemmas,
         "likes": q.likes
     } for q in quotes])
-
 # === Лайк (только для авторизованных) ===
 @app.route('/quotes/<int:quote_id>/like', methods=['POST'])
 @jwt_required()
