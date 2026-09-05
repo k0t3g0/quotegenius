@@ -4,11 +4,15 @@
   "private": true,
   "dependencies": {
     "@craco/craco": "^7.1.0",
+    "@hookform/resolvers": "^5.9.1",
     "axios": "^1.7.7",
     "jwt-decode": "^4.0.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "react-scripts": "5.0.1"
+    "react-hook-form": "^7.87.0",
+    "react-router-dom": "^7.18.3",
+    "react-scripts": "5.0.1",
+    "yup": "^1.7.1"
   },
   "proxy": "http://localhost:5000",
   "scripts": {
