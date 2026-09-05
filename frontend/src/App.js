@@ -8,7 +8,13 @@ function App() {
   const [quotes, setQuotes] = useState([]);
   const [text, setText] = useState('');
   const [author, setAuthor] = useState('');
+  const [theme, setTheme] = useState('');
+  const [mood, setMood] = useState('');
+  const [style, setStyle] = useState('');
   const [search, setSearch] = useState('');
+  const [filterTheme, setFilterTheme] = useState('');
+  const [filterMood, setFilterMood] = useState('');
+  const [filterStyle, setFilterStyle] = useState('');
   const [loading, setLoading] = useState(false);
 
   const [loginUsername, setLoginUsername] = useState('');
@@ -43,6 +49,13 @@ function App() {
       console.error('Ошибка загрузки:', error);
     }
     setLoading(false);
+  };
+  const resetSearch = () => {
+    setSearch('');
+    setFilterTheme('');
+    setFilterMood('');
+    setFilterStyle('');
+    loadQuotes();
   };
 
   useEffect(() => {
@@ -99,9 +112,12 @@ function App() {
       return;
     }
     try {
-      await axios.post('/quotes', { text, author: author || 'Неизвестен' });
+      await axios.post('/quotes', { text, author: author || 'Неизвестен', theme, mood, style });
       setText('');
       setAuthor('');
+      setTheme('');
+      setMood('');
+      setStyle('');
       loadQuotes();
     } catch (error) {
       console.error('Ошибка создания:', error);
@@ -146,21 +162,21 @@ function App() {
   };
 
   // === Поиск ===
-  const searchQuotes = async (e) => {
+    const searchQuotes = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await axios.get(`/quotes?search=${search}`);
+      const params = new URLSearchParams();
+      if (search) params.append('search', search);
+      if (filterTheme) params.append('theme', filterTheme);
+      if (filterMood) params.append('mood', filterMood);
+      if (filterStyle) params.append('style', filterStyle);
+      const response = await axios.get(`/quotes?${params.toString()}`);
       setQuotes(response.data);
     } catch (error) {
       console.error('Ошибка поиска:', error);
     }
     setLoading(false);
-  };
-
-  const resetSearch = () => {
-    setSearch('');
-    loadQuotes();
   };
 
   return (
@@ -199,15 +215,67 @@ function App() {
           <h2>➕ Добавить цитату</h2>
           <textarea rows={3} placeholder="Текст цитаты..." value={text} onChange={(e) => setText(e.target.value)} style={{ width: '100%', padding: 8 }} required />
           <input type="text" placeholder="Автор (необязательно)" value={author} onChange={(e) => setAuthor(e.target.value)} style={{ width: '100%', padding: 8, marginTop: 8 }} />
+          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            <select value={theme} onChange={(e) => setTheme(e.target.value)} style={{ flex: 1, padding: 8 }}>
+              <option value="">Тема (любая)</option>
+              <option value="Любовь">Любовь</option>
+              <option value="Мотивация">Мотивация</option>
+              <option value="Дружба">Дружба</option>
+              <option value="Жизнь">Жизнь</option>
+              <option value="Юмор">Юмор</option>
+              <option value="Философия">Философия</option>
+            </select>
+            <select value={mood} onChange={(e) => setMood(e.target.value)} style={{ flex: 1, padding: 8 }}>
+              <option value="">Настроение (любое)</option>
+              <option value="Вдохновляющее">Вдохновляющее</option>
+              <option value="Грустное">Грустное</option>
+              <option value="Весёлое">Весёлое</option>
+              <option value="Спокойное">Спокойное</option>
+            </select>
+            <select value={style} onChange={(e) => setStyle(e.target.value)} style={{ flex: 1, padding: 8 }}>
+              <option value="">Стиль (любой)</option>
+              <option value="Классический">Классический</option>
+              <option value="Современный">Современный</option>
+              <option value="Ироничный">Ироничный</option>
+              <option value="Поэтичный">Поэтичный</option>
+            </select>
+          </div>
           <button type="submit" style={{ marginTop: 8, padding: '8px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: 4 }}>Сохранить</button>
         </form>
       )}
 
       {/* Поиск (доступен всем) */}
-      <form onSubmit={searchQuotes} style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
-        <input type="text" placeholder="Поиск цитат..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ flex: 1, padding: 8, borderRadius: 4, border: '1px solid #ccc' }} />
-        <button type="submit" style={{ padding: '8px 20px', background: '#2196F3', color: 'white', border: 'none', borderRadius: 4 }}>Найти</button>
-        <button type="button" onClick={resetSearch} style={{ padding: '8px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: 4 }}>Сбросить</button>
+      <form onSubmit={searchQuotes} style={{ marginBottom: 20 }}>
+        <div style={{ display: 'flex', gap: 10, marginBottom: 8 }}>
+          <input type="text" placeholder="Поиск цитат..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ flex: 1, padding: 8, borderRadius: 4, border: '1px solid #ccc' }} />
+          <button type="submit" style={{ padding: '8px 20px', background: '#2196F3', color: 'white', border: 'none', borderRadius: 4 }}>Найти</button>
+          <button type="button" onClick={resetSearch} style={{ padding: '8px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: 4 }}>Сбросить</button>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <select value={filterTheme} onChange={(e) => setFilterTheme(e.target.value)} style={{ flex: 1, padding: 8 }}>
+            <option value="">Тема (любая)</option>
+            <option value="Любовь">Любовь</option>
+            <option value="Мотивация">Мотивация</option>
+            <option value="Дружба">Дружба</option>
+            <option value="Жизнь">Жизнь</option>
+            <option value="Юмор">Юмор</option>
+            <option value="Философия">Философия</option>
+          </select>
+          <select value={filterMood} onChange={(e) => setFilterMood(e.target.value)} style={{ flex: 1, padding: 8 }}>
+            <option value="">Настроение (любое)</option>
+            <option value="Вдохновляющее">Вдохновляющее</option>
+            <option value="Грустное">Грустное</option>
+            <option value="Весёлое">Весёлое</option>
+            <option value="Спокойное">Спокойное</option>
+          </select>
+          <select value={filterStyle} onChange={(e) => setFilterStyle(e.target.value)} style={{ flex: 1, padding: 8 }}>
+            <option value="">Стиль (любой)</option>
+            <option value="Классический">Классический</option>
+            <option value="Современный">Современный</option>
+            <option value="Ироничный">Ироничный</option>
+            <option value="Поэтичный">Поэтичный</option>
+          </select>
+        </div>
       </form>
 
       {/* Список цитат */}
@@ -218,6 +286,11 @@ function App() {
         <div key={q.id} style={{ border: '1px solid #ddd', borderRadius: 8, padding: 15, marginBottom: 10 }}>
           <p style={{ fontSize: 18 }}>"{q.text}"</p>
           <p style={{ color: '#666' }}>— {q.author}</p>
+          {(q.theme || q.mood || q.style) && (
+            <p style={{ fontSize: 12, color: '#888' }}>
+              {[q.theme && `Тема: ${q.theme}`, q.mood && `Настроение: ${q.mood}`, q.style && `Стиль: ${q.style}`].filter(Boolean).join(' · ')}
+            </p>
+          )}
           {q.lemmas && <p style={{ fontSize: 12, color: '#999' }}>Леммы: {q.lemmas}</p>}
           {user && (
             <div style={{ marginTop: 10 }}>
