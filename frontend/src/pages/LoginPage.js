@@ -40,30 +40,79 @@ function LoginPage({ onLogin }) {
   };
 
   return (
-    <div style={{ maxWidth: 700, margin: 'auto', padding: 20 }}>
-      <h1>📚 QuoteGenius</h1>
-      <p><Link to="/">← Вернуться к цитатам</Link></p>
+    <div className="container py-5" style={{ maxWidth: 700 }}>
+      <h1 className="mb-1">📚 QuoteGenius</h1>
+      <Link to="/" className="d-inline-block mb-4">← Вернуться к цитатам</Link>
 
-      <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-        <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} style={{ flex: 1, border: '1px solid #ccc', padding: 15, borderRadius: 8 }}>
-          <h3>Вход</h3>
-          <input type="text" placeholder="Логин" {...loginForm.register('username')} style={{ width: '100%', padding: 8, marginBottom: 4 }} />
-          {loginForm.formState.errors.username && <p style={{ color: 'red', fontSize: 13, margin: '0 0 8px' }}>{loginForm.formState.errors.username.message}</p>}
-          <input type="password" placeholder="Пароль" {...loginForm.register('password')} style={{ width: '100%', padding: 8, marginBottom: 4 }} />
-          {loginForm.formState.errors.password && <p style={{ color: 'red', fontSize: 13, margin: '0 0 8px' }}>{loginForm.formState.errors.password.message}</p>}
-          <button type="submit" style={{ padding: '8px 16px', background: '#2196F3', color: 'white', border: 'none', borderRadius: 4 }}>Войти</button>
-        </form>
+      <div className="row g-3">
+        <div className="col-md-6">
+          <div className="card h-100">
+            <div className="card-body">
+              <h3 className="card-title h5">Вход</h3>
+              <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} noValidate>
+                <div className="mb-3">
+                  <label className="form-label">Логин</label>
+                  <input
+                    type="text"
+                    className={`form-control ${loginForm.formState.errors.username ? 'is-invalid' : ''}`}
+                    {...loginForm.register('username')}
+                  />
+                  {loginForm.formState.errors.username && (
+                    <div className="invalid-feedback">{loginForm.formState.errors.username.message}</div>
+                  )}
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">Пароль</label>
+                  <input
+                    type="password"
+                    className={`form-control ${loginForm.formState.errors.password ? 'is-invalid' : ''}`}
+                    {...loginForm.register('password')}
+                  />
+                  {loginForm.formState.errors.password && (
+                    <div className="invalid-feedback">{loginForm.formState.errors.password.message}</div>
+                  )}
+                </div>
+                <button type="submit" className="btn btn-primary w-100">Войти</button>
+              </form>
+            </div>
+          </div>
+        </div>
 
-        <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} style={{ flex: 1, border: '1px solid #ccc', padding: 15, borderRadius: 8 }}>
-          <h3>Регистрация</h3>
-          <input type="text" placeholder="Логин" {...registerForm.register('username')} style={{ width: '100%', padding: 8, marginBottom: 4 }} />
-          {registerForm.formState.errors.username && <p style={{ color: 'red', fontSize: 13, margin: '0 0 8px' }}>{registerForm.formState.errors.username.message}</p>}
-          <input type="password" placeholder="Пароль" {...registerForm.register('password')} style={{ width: '100%', padding: 8, marginBottom: 4 }} />
-          {registerForm.formState.errors.password && <p style={{ color: 'red', fontSize: 13, margin: '0 0 8px' }}>{registerForm.formState.errors.password.message}</p>}
-          <button type="submit" style={{ padding: '8px 16px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: 4 }}>Зарегистрироваться</button>
-        </form>
+        <div className="col-md-6">
+          <div className="card h-100">
+            <div className="card-body">
+              <h3 className="card-title h5">Регистрация</h3>
+              <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} noValidate>
+                <div className="mb-3">
+                  <label className="form-label">Логин</label>
+                  <input
+                    type="text"
+                    className={`form-control ${registerForm.formState.errors.username ? 'is-invalid' : ''}`}
+                    {...registerForm.register('username')}
+                  />
+                  {registerForm.formState.errors.username && (
+                    <div className="invalid-feedback">{registerForm.formState.errors.username.message}</div>
+                  )}
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">Пароль</label>
+                  <input
+                    type="password"
+                    className={`form-control ${registerForm.formState.errors.password ? 'is-invalid' : ''}`}
+                    {...registerForm.register('password')}
+                  />
+                  {registerForm.formState.errors.password && (
+                    <div className="invalid-feedback">{registerForm.formState.errors.password.message}</div>
+                  )}
+                </div>
+                <button type="submit" className="btn btn-success w-100">Зарегистрироваться</button>
+              </form>
+            </div>
+          </div>
+        </div>
       </div>
-      {authError && <p style={{ color: 'red', marginTop: 15 }}>{authError}</p>}
+
+      {authError && <div className="alert alert-danger mt-4">{authError}</div>}
     </div>
   );
 }

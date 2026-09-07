@@ -1,19 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+
+const quoteSchema = yup.object({
+  text: yup.string().trim().required('Введите текст цитаты'),
+  author: yup.string(),
+  theme: yup.string(),
+  mood: yup.string(),
+  style: yup.string(),
+});
 
 function HomePage({ user, onLogout }) {
   const [quotes, setQuotes] = useState([]);
-  const [text, setText] = useState('');
-  const [author, setAuthor] = useState('');
-  const [theme, setTheme] = useState('');
-  const [mood, setMood] = useState('');
-  const [style, setStyle] = useState('');
   const [search, setSearch] = useState('');
   const [filterTheme, setFilterTheme] = useState('');
   const [filterMood, setFilterMood] = useState('');
   const [filterStyle, setFilterStyle] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const quoteForm = useForm({
+    resolver: yupResolver(quoteSchema),
+    defaultValues: { text: '', author: '', theme: '', mood: '', style: '' },
+  });
 
   const loadQuotes = async () => {
     setLoading(true);
@@ -38,19 +49,10 @@ function HomePage({ user, onLogout }) {
     loadQuotes();
   }, []);
 
-  const createQuote = async (e) => {
-    e.preventDefault();
-    if (!text.trim()) {
-      alert('Введите текст цитаты');
-      return;
-    }
+  const onCreateQuote = async (data) => {
     try {
-      await axios.post('/quotes', { text, author: author || 'Неизвестен', theme, mood, style });
-      setText('');
-      setAuthor('');
-      setTheme('');
-      setMood('');
-      setStyle('');
+      await axios.post('/quotes', { ...data, author: data.author || 'Неизвестен' });
+      quoteForm.reset();
       loadQuotes();
     } catch (error) {
       console.error('Ошибка создания:', error);
@@ -110,109 +112,153 @@ function HomePage({ user, onLogout }) {
   };
 
   return (
-    <div style={{ maxWidth: 700, margin: 'auto', padding: 20 }}>
-      <h1>📚 QuoteGenius</h1>
-      <p>Интеллектуальный генератор цитат</p>
+    <div className="container py-4" style={{ maxWidth: 700 }}>
+      <div className="d-flex justify-content-between align-items-center mb-1">
+        <h1 className="mb-0">📚 QuoteGenius</h1>
+        {user && (
+          <div className="d-flex align-items-center gap-3">
+            <span>👋 {user.username}</span>
+            <button onClick={onLogout} className="btn btn-outline-danger btn-sm">Выйти</button>
+          </div>
+        )}
+      </div>
+      <p className="text-muted">Интеллектуальный генератор цитат</p>
 
-      {!user ? (
-        <div style={{ marginBottom: 30 }}>
-          <Link to="/login">
-            <button style={{ padding: '8px 16px', background: '#2196F3', color: 'white', border: 'none', borderRadius: 4 }}>Войти / Зарегистрироваться</button>
-          </Link>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <span>👋 Привет, {user.username}!</span>
-          <button onClick={onLogout} style={{ padding: '6px 12px', background: '#f44336', color: 'white', border: 'none', borderRadius: 4 }}>Выйти</button>
-        </div>
+      {!user && (
+        <Link to="/login" className="btn btn-primary mb-4">Войти / Зарегистрироваться</Link>
       )}
 
       {user && (
-        <form onSubmit={createQuote} style={{ margin: '30px 0', padding: 20, border: '1px solid #ddd', borderRadius: 8 }}>
-          <h2>➕ Добавить цитату</h2>
-          <textarea rows={3} placeholder="Текст цитаты..." value={text} onChange={(e) => setText(e.target.value)} style={{ width: '100%', padding: 8 }} required />
-          <input type="text" placeholder="Автор (необязательно)" value={author} onChange={(e) => setAuthor(e.target.value)} style={{ width: '100%', padding: 8, marginTop: 8 }} />
-          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-            <select value={theme} onChange={(e) => setTheme(e.target.value)} style={{ flex: 1, padding: 8 }}>
-              <option value="">Тема (любая)</option>
-              <option value="Любовь">Любовь</option>
-              <option value="Мотивация">Мотивация</option>
-              <option value="Дружба">Дружба</option>
-              <option value="Жизнь">Жизнь</option>
-              <option value="Юмор">Юмор</option>
-              <option value="Философия">Философия</option>
-            </select>
-            <select value={mood} onChange={(e) => setMood(e.target.value)} style={{ flex: 1, padding: 8 }}>
-              <option value="">Настроение (любое)</option>
-              <option value="Вдохновляющее">Вдохновляющее</option>
-              <option value="Грустное">Грустное</option>
-              <option value="Весёлое">Весёлое</option>
-              <option value="Спокойное">Спокойное</option>
-            </select>
-            <select value={style} onChange={(e) => setStyle(e.target.value)} style={{ flex: 1, padding: 8 }}>
-              <option value="">Стиль (любой)</option>
-              <option value="Классический">Классический</option>
-              <option value="Современный">Современный</option>
-              <option value="Ироничный">Ироничный</option>
-              <option value="Поэтичный">Поэтичный</option>
-            </select>
+        <div className="card mb-4">
+          <div className="card-body">
+            <h2 className="h5">➕ Добавить цитату</h2>
+            <form onSubmit={quoteForm.handleSubmit(onCreateQuote)} noValidate>
+              <div className="mb-2">
+                <textarea
+                  rows={3}
+                  placeholder="Текст цитаты..."
+                  className={`form-control ${quoteForm.formState.errors.text ? 'is-invalid' : ''}`}
+                  {...quoteForm.register('text')}
+                />
+                {quoteForm.formState.errors.text && (
+                  <div className="invalid-feedback">{quoteForm.formState.errors.text.message}</div>
+                )}
+              </div>
+              <input
+                type="text"
+                placeholder="Автор (необязательно)"
+                className="form-control mb-2"
+                {...quoteForm.register('author')}
+              />
+              <div className="row g-2 mb-2">
+                <div className="col">
+                  <select className="form-select" {...quoteForm.register('theme')}>
+                    <option value="">Тема (любая)</option>
+                    <option value="Любовь">Любовь</option>
+                    <option value="Мотивация">Мотивация</option>
+                    <option value="Дружба">Дружба</option>
+                    <option value="Жизнь">Жизнь</option>
+                    <option value="Юмор">Юмор</option>
+                    <option value="Философия">Философия</option>
+                  </select>
+                </div>
+                <div className="col">
+                  <select className="form-select" {...quoteForm.register('mood')}>
+                    <option value="">Настроение (любое)</option>
+                    <option value="Вдохновляющее">Вдохновляющее</option>
+                    <option value="Грустное">Грустное</option>
+                    <option value="Весёлое">Весёлое</option>
+                    <option value="Спокойное">Спокойное</option>
+                  </select>
+                </div>
+                <div className="col">
+                  <select className="form-select" {...quoteForm.register('style')}>
+                    <option value="">Стиль (любой)</option>
+                    <option value="Классический">Классический</option>
+                    <option value="Современный">Современный</option>
+                    <option value="Ироничный">Ироничный</option>
+                    <option value="Поэтичный">Поэтичный</option>
+                  </select>
+                </div>
+              </div>
+              <button type="submit" className="btn btn-success">Сохранить</button>
+            </form>
           </div>
-          <button type="submit" style={{ marginTop: 8, padding: '8px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: 4 }}>Сохранить</button>
-        </form>
+        </div>
       )}
 
-      <form onSubmit={searchQuotes} style={{ marginBottom: 20 }}>
-        <div style={{ display: 'flex', gap: 10, marginBottom: 8 }}>
-          <input type="text" placeholder="Поиск цитат..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ flex: 1, padding: 8, borderRadius: 4, border: '1px solid #ccc' }} />
-          <button type="submit" style={{ padding: '8px 20px', background: '#2196F3', color: 'white', border: 'none', borderRadius: 4 }}>Найти</button>
-          <button type="button" onClick={resetSearch} style={{ padding: '8px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: 4 }}>Сбросить</button>
+      <div className="card mb-4">
+        <div className="card-body">
+          <form onSubmit={searchQuotes}>
+            <div className="d-flex gap-2 mb-2">
+              <input
+                type="text"
+                placeholder="Поиск цитат..."
+                className="form-control"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <button type="submit" className="btn btn-primary text-nowrap">Найти</button>
+              <button type="button" onClick={resetSearch} className="btn btn-outline-secondary text-nowrap">Сбросить</button>
+            </div>
+            <div className="row g-2">
+              <div className="col">
+                <select className="form-select" value={filterTheme} onChange={(e) => setFilterTheme(e.target.value)}>
+                  <option value="">Тема (любая)</option>
+                  <option value="Любовь">Любовь</option>
+                  <option value="Мотивация">Мотивация</option>
+                  <option value="Дружба">Дружба</option>
+                  <option value="Жизнь">Жизнь</option>
+                  <option value="Юмор">Юмор</option>
+                  <option value="Философия">Философия</option>
+                </select>
+              </div>
+              <div className="col">
+                <select className="form-select" value={filterMood} onChange={(e) => setFilterMood(e.target.value)}>
+                  <option value="">Настроение (любое)</option>
+                  <option value="Вдохновляющее">Вдохновляющее</option>
+                  <option value="Грустное">Грустное</option>
+                  <option value="Весёлое">Весёлое</option>
+                  <option value="Спокойное">Спокойное</option>
+                </select>
+              </div>
+              <div className="col">
+                <select className="form-select" value={filterStyle} onChange={(e) => setFilterStyle(e.target.value)}>
+                  <option value="">Стиль (любой)</option>
+                  <option value="Классический">Классический</option>
+                  <option value="Современный">Современный</option>
+                  <option value="Ироничный">Ироничный</option>
+                  <option value="Поэтичный">Поэтичный</option>
+                </select>
+              </div>
+            </div>
+          </form>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <select value={filterTheme} onChange={(e) => setFilterTheme(e.target.value)} style={{ flex: 1, padding: 8 }}>
-            <option value="">Тема (любая)</option>
-            <option value="Любовь">Любовь</option>
-            <option value="Мотивация">Мотивация</option>
-            <option value="Дружба">Дружба</option>
-            <option value="Жизнь">Жизнь</option>
-            <option value="Юмор">Юмор</option>
-            <option value="Философия">Философия</option>
-          </select>
-          <select value={filterMood} onChange={(e) => setFilterMood(e.target.value)} style={{ flex: 1, padding: 8 }}>
-            <option value="">Настроение (любое)</option>
-            <option value="Вдохновляющее">Вдохновляющее</option>
-            <option value="Грустное">Грустное</option>
-            <option value="Весёлое">Весёлое</option>
-            <option value="Спокойное">Спокойное</option>
-          </select>
-          <select value={filterStyle} onChange={(e) => setFilterStyle(e.target.value)} style={{ flex: 1, padding: 8 }}>
-            <option value="">Стиль (любой)</option>
-            <option value="Классический">Классический</option>
-            <option value="Современный">Современный</option>
-            <option value="Ироничный">Ироничный</option>
-            <option value="Поэтичный">Поэтичный</option>
-          </select>
-        </div>
-      </form>
+      </div>
 
-      <h2>📖 Все цитаты ({quotes.length})</h2>
+      <h2 className="h5">📖 Все цитаты ({quotes.length})</h2>
       {loading && <p>Загрузка...</p>}
       {quotes.length === 0 && !loading && <p>Цитат пока нет. Добавьте первую!</p>}
       {quotes.map((q) => (
-        <div key={q.id} style={{ border: '1px solid #ddd', borderRadius: 8, padding: 15, marginBottom: 10 }}>
-          <p style={{ fontSize: 18 }}>"{q.text}"</p>
-          <p style={{ color: '#666' }}>— {q.author}</p>
-          {(q.theme || q.mood || q.style) && (
-            <p style={{ fontSize: 12, color: '#888' }}>
-              {[q.theme && `Тема: ${q.theme}`, q.mood && `Настроение: ${q.mood}`, q.style && `Стиль: ${q.style}`].filter(Boolean).join(' · ')}
-            </p>
-          )}
-          {q.lemmas && <p style={{ fontSize: 12, color: '#999' }}>Леммы: {q.lemmas}</p>}
-          {user && (
-            <div style={{ marginTop: 10 }}>
-              <button onClick={() => likeQuote(q.id)} style={{ marginRight: 10, padding: '5px 15px', background: '#2196F3', color: 'white', border: 'none', borderRadius: 4 }}>❤️ {q.likes || 0}</button>
-              <button onClick={() => deleteQuote(q.id)} style={{ padding: '5px 15px', background: '#ff4444', color: 'white', border: 'none', borderRadius: 4 }}>Удалить</button>
-            </div>
-          )}
+        <div key={q.id} className="card mb-3">
+          <div className="card-body">
+            <p className="fs-5">"{q.text}"</p>
+            <p className="text-muted">— {q.author}</p>
+            {(q.theme || q.mood || q.style) && (
+              <p className="mb-1">
+                {q.theme && <span className="badge text-bg-light me-1">Тема: {q.theme}</span>}
+                {q.mood && <span className="badge text-bg-light me-1">Настроение: {q.mood}</span>}
+                {q.style && <span className="badge text-bg-light me-1">Стиль: {q.style}</span>}
+              </p>
+            )}
+            {q.lemmas && <p className="text-muted small">Леммы: {q.lemmas}</p>}
+            {user && (
+              <div className="mt-2">
+                <button onClick={() => likeQuote(q.id)} className="btn btn-primary btn-sm me-2">❤️ {q.likes || 0}</button>
+                <button onClick={() => deleteQuote(q.id)} className="btn btn-danger btn-sm">Удалить</button>
+              </div>
+            )}
+          </div>
         </div>
       ))}
     </div>
