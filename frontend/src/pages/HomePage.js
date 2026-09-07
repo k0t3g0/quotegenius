@@ -94,6 +94,23 @@ function HomePage({ user, onLogout }) {
     }
   };
 
+  const toggleFavorite = async (q) => {
+    try {
+      if (q.is_favorite) {
+        await axios.delete(`/quotes/${q.id}/favorite`);
+      } else {
+        await axios.post(`/quotes/${q.id}/favorite`);
+      }
+      loadQuotes();
+    } catch (error) {
+      console.error('Ошибка избранного:', error);
+      if (error.response?.status === 401) {
+        alert('Сессия истекла. Войдите заново.');
+        onLogout();
+      }
+    }
+  };
+
   const searchQuotes = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -117,6 +134,7 @@ function HomePage({ user, onLogout }) {
         <h1 className="mb-0">📚 QuoteGenius</h1>
         {user && (
           <div className="d-flex align-items-center gap-3">
+            <Link to="/favorites" className="btn btn-outline-warning btn-sm">★ Избранное</Link>
             <span>👋 {user.username}</span>
             <button onClick={onLogout} className="btn btn-outline-danger btn-sm">Выйти</button>
           </div>
@@ -255,6 +273,12 @@ function HomePage({ user, onLogout }) {
             {user && (
               <div className="mt-2">
                 <button onClick={() => likeQuote(q.id)} className="btn btn-primary btn-sm me-2">❤️ {q.likes || 0}</button>
+                <button
+                  onClick={() => toggleFavorite(q)}
+                  className={`btn btn-sm me-2 ${q.is_favorite ? 'btn-warning' : 'btn-outline-warning'}`}
+                >
+                  ★
+                </button>
                 <button onClick={() => deleteQuote(q.id)} className="btn btn-danger btn-sm">Удалить</button>
               </div>
             )}

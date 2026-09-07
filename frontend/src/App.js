@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import axios from 'axios';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
+import FavoritesPage from './pages/FavoritesPage';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -37,6 +38,7 @@ function App() {
     <Routes>
       <Route path="/" element={<HomePage user={user} onLogout={handleLogout} />} />
       <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
+      <Route path="/favorites" element={<FavoritesPage user={user} onLogout={handleLogout} />} />
     </Routes>
   );
 }
